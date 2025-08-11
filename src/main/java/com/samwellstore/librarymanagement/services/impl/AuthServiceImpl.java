@@ -7,6 +7,8 @@ import com.samwellstore.librarymanagement.DTOs.SignUpDTOs.SignUpRequestDTO;
 import com.samwellstore.librarymanagement.Repositories.UserRepository;
 import com.samwellstore.librarymanagement.entities.User;
 import com.samwellstore.librarymanagement.enums.Role;
+import com.samwellstore.librarymanagement.exceptions.ResourceNotFoundException;
+import com.samwellstore.librarymanagement.exceptions.UserAlreadyExistsException;
 import com.samwellstore.librarymanagement.security.JWTService;
 import com.samwellstore.librarymanagement.services.AuthService;
 import com.samwellstore.librarymanagement.utils.mapper.Mapper;
@@ -40,7 +42,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public SignUpResponseDTO signup(SignUpRequestDTO signUpRequestDTO) {
         if(userRepository.existsByEmail(signUpRequestDTO.getEmail())){
-            throw new RuntimeException("User already exists");
+            throw new UserAlreadyExistsException("User already exists");
         };
         User userEntity = signUpRequestDTOMapper.mapFrom(signUpRequestDTO);
         userEntity.setRole(Role.USER);
@@ -52,7 +54,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public LoginResponseDTO login(LoginRequestDTO loginRequestDTO) {
         try {
-            User user = userRepository.findByEmail(loginRequestDTO.getEmail()).orElseThrow(() -> new RuntimeException("User not found with email: " + loginRequestDTO.getEmail()));
+            User user = userRepository.findByEmail(loginRequestDTO.getEmail()).orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + loginRequestDTO.getEmail()));
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             loginRequestDTO.getEmail(),

@@ -1,6 +1,7 @@
 package com.samwellstore.librarymanagement.config;
 
 
+import com.samwellstore.librarymanagement.exceptions.CustomAccessDeniedException;
 import com.samwellstore.librarymanagement.security.JWTFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -27,6 +28,9 @@ public class SecurityConfig {
     @Autowired
     private JWTFilter jwtFilter;
 
+    @Autowired
+    CustomAccessDeniedException customAccessDeniedException;
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -35,6 +39,9 @@ public class SecurityConfig {
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers("/register", "/login", "/test/**").permitAll()
                         .anyRequest().authenticated()
+                )
+                .exceptionHandling(exception -> exception
+                        .accessDeniedHandler(customAccessDeniedException)
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);

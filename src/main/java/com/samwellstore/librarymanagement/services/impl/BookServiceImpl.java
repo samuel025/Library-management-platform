@@ -3,6 +3,7 @@ package com.samwellstore.librarymanagement.services.impl;
 import com.samwellstore.librarymanagement.DTOs.BookDTOs.BookDTO;
 import com.samwellstore.librarymanagement.Repositories.BookRepository;
 import com.samwellstore.librarymanagement.entities.Book;
+import com.samwellstore.librarymanagement.exceptions.ResourceNotFoundException;
 import com.samwellstore.librarymanagement.services.BookService;
 import com.samwellstore.librarymanagement.utils.mapper.impl.BookMapper;
 import org.springframework.stereotype.Service;
@@ -34,7 +35,7 @@ public class BookServiceImpl implements BookService {
     public BookDTO getBookByISBN(BookDTO bookDTO) {
         Book book = bookMapper.mapFrom(bookDTO);
         Book foundBook = bookRepository.findByIsbn(book.getIsbn())
-                .orElseThrow(() -> new RuntimeException("Book not found with ISBN: " + book.getIsbn()));
+                .orElseThrow(() -> new ResourceNotFoundException("Book not found with ISBN: " + book.getIsbn()));
         return bookMapper.mapTo(foundBook);
     }
 
@@ -47,7 +48,7 @@ public class BookServiceImpl implements BookService {
     @Override
     public BookDTO updateBook(BookDTO bookDTO, Long bookId) {
             Book existingBook = bookRepository.findById(bookId)
-                    .orElseThrow(() -> new RuntimeException("Book not found with id: " + bookId));
+                    .orElseThrow(() -> new ResourceNotFoundException("Book not found with id: " + bookId));
             updateBookFields(existingBook, bookDTO);
             Book updatedBook = bookRepository.save(existingBook);
             return bookMapper.mapTo(updatedBook);
@@ -56,13 +57,13 @@ public class BookServiceImpl implements BookService {
     @Override
     public void deleteBook(Long bookId) {
         Book book = bookRepository.findById(bookId)
-                .orElseThrow(() -> new RuntimeException("Book not found with id: " + bookId));
+                .orElseThrow(() -> new ResourceNotFoundException("Book not found with id: " + bookId));
         bookRepository.delete(book);
     }
 
     @Override
     public BookDTO getBookById(Long bookId) {
-        Book book = bookRepository.findById(bookId).orElseThrow(() -> new RuntimeException("Book not found with id: " + bookId));
+        Book book = bookRepository.findById(bookId).orElseThrow(() -> new ResourceNotFoundException("Book not found with id: " + bookId));
         return bookMapper.mapTo(book);
     }
 

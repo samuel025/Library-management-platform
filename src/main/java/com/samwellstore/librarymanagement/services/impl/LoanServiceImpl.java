@@ -8,6 +8,10 @@ import com.samwellstore.librarymanagement.Repositories.UserRepository;
 import com.samwellstore.librarymanagement.entities.Book;
 import com.samwellstore.librarymanagement.entities.Loan;
 import com.samwellstore.librarymanagement.entities.User;
+import com.samwellstore.librarymanagement.exceptions.AlreadyLoanedException;
+import com.samwellstore.librarymanagement.exceptions.LoanRepaidException;
+import com.samwellstore.librarymanagement.exceptions.ResourceNotFoundException;
+import com.samwellstore.librarymanagement.exceptions.UnauthorizedLoan;
 import com.samwellstore.librarymanagement.security.UserPrincipal;
 import com.samwellstore.librarymanagement.services.LoanService;
 import com.samwellstore.librarymanagement.utils.mapper.Mapper;
@@ -37,15 +41,15 @@ public class LoanServiceImpl implements LoanService {
     @Override
     public LoanDTO loanBook(Long bookId, UserPrincipal userPrincipal) {
         Book book = bookRepository.findById(bookId)
-                .orElseThrow(() -> new RuntimeException("Book not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Book not found"));
         if(loanRepository.existsByBookIdAndUserIdAndReturnedFalse(bookId, userPrincipal.getId())){
-            throw new RuntimeException("You have already loaned this book");
+            throw new AlreadyLoanedException("You have already loaned this book");
         }
         Loan loan = new Loan();
         loan.setBook(book);
         loan.setLoanDate(LocalDate.now());
         loan.setReturned(false);
-        User user = userRepository.findById(userPrincipal.getId()).orElseThrow(() -> new RuntimeException("User not found"));
+        User user = userRepository.findById(userPrincipal.getId()).orElseThrow(() -> new ResourceNotFoundException("User not found"));
         loan.setUser(user);
         book.setAvailableCopies(book.getAvailableCopies() - 1);
         Loan savedLoan = loanRepository.save(loan);
@@ -56,12 +60,12 @@ public class LoanServiceImpl implements LoanService {
     @Override
     public LoanPaidResponseDTO repayLoan(Long loanId, UserPrincipal userPrincipal) {
         Loan loan = loanRepository.findById(loanId)
-                .orElseThrow(() -> new RuntimeException("Loan not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Loan not found"));
         if(!(userPrincipal.getId().equals(loan.getUser().getId()))) {
-            throw new RuntimeException("You are not authorized to repay this loan");
+            throw new UnauthorizedLoan("You are not authorized to repay this loan");
         }
         if(loan.isReturned()) {
-            throw new RuntimeException("This loan has already been repaid");
+            throw new LoanRepaidException("This loan has already been repaid");
         }
         loan.setReturned(true);
         loan.setReturnDate(LocalDate.now());
